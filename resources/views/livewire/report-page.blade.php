@@ -15,6 +15,15 @@
                     <input type="date" id="endDate" wire:model="endDate" class="form-control">
                 </div>
             </div>
+
+
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="displayDate">Display Date:</label>
+                    <input type="date" id="displayDate" wire:model="displayDate" class="form-control">
+                </div>
+            </div>
+
             <div class="col-md-2">
                 <div class="form-group">
                     <label for="nameFilter">Name Filter:</label>
@@ -77,33 +86,48 @@
             <table class="table table-striped">
                 <thead>
                 <tr>
+                    <th>Date</th>
                     <th>Name</th>
-                    <th>Our Share</th>
                     <th>Country</th>
                     <th>Product</th>
                     <th>Operator</th>
                     <th>Aggregator</th>
-                    <th>Currency Conversion</th>
+                    <th>Subs</th>
+                    <th>Paid</th>
+                    <th>Charged</th>
                     <th>Renewals</th>
                     <th>Unsubs</th>
+                    <th>Amount</th>
                 </tr>
                 </thead>
                 <tbody>
+
                 @foreach ($data as $item)
-                    <tr>
-                        <td>{{ $item['integration_data']['name'] }}</td>
-                        <td>{{ $item['integration_data']['our_share'] }}</td>
-                        <td>{{ $item['integration_data']['country'] }}</td>
-                        <td>{{ $item['integration_data']['product'] }}</td>
-                        <td>{{ $item['integration_data']['operator'] }}</td>
-                        <td>{{ $item['integration_data']['aggregator'] }}</td>
-                        <td>{{ $item['integration_data']['currency_conversion'] }}</td>
-                        <td>{{ $totalRenewals}}</td>
-                        <td>{{ $totalUnsubs }}</td>
-                    </tr>
+                    @foreach ($item['stats'] as $date_key => $items)
+
+                        <tr>
+                            <td>{{ $date_key}}</td>
+                            <td>
+                                <a wire:click="view({{ $item['integration_id'] }})" style="cursor: pointer">
+                                    {{ $item['integration_data']['name'] }}
+                                </a>
+                            </td>
+                            <td>{{ $item['integration_data']['country'] }}</td>
+                            <td>{{ $item['integration_data']['product'] }}</td>
+                            <td>{{ $item['integration_data']['operator'] }}</td>
+                            <td>{{ $item['integration_data']['aggregator'] }}</td>
+                            <td>{{ $item['stats'][$date_key]['total_subs']}}</td>
+                            <td>{{ $item['stats'][$date_key]['total_paid']}}</td>
+                            <td>{{ $item['stats'][$date_key]['total_charged']}}</td>
+                            <td>{{ $item['stats'][$date_key]['total_renewals']}}</td>
+                            <td>{{ $item['stats'][$date_key]['total_unsubs']}}</td>
+                            <td>{{ $item['stats'][$date_key]['total_amount']}}</td>
+                        </tr>
+                    @endforeach
                 @endforeach
                 </tbody>
             </table>
         </div>
     </div>
+
 </div>

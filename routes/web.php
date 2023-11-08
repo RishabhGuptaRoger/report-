@@ -4,6 +4,7 @@ use App\Http\Controllers\Reports;
 use App\Livewire\ReportPage;
 use Illuminate\Support\Facades\Route;
 
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -30,5 +31,7 @@ Route::middleware([
 
     Route::group(['namespace' => 'App\Http\Controllers'], function () {
         Route::get('/report', 'Reports@index')->name("Reports");
+        Route::get('/report/{integration_id}', 'Reports@view')->name("details");
     });
+
 });

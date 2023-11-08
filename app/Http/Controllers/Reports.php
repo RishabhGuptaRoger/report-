@@ -10,5 +10,4 @@ class Reports extends Controller
     {
         return view('layouts.reports');
     }
-
 }
