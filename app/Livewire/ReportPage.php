@@ -40,14 +40,13 @@ class ReportPage extends Component
     {
 
         $document = DB::connection('mongodb')->collection('all_reports_daily')
-            ->where('integration_id', (int)'87')
+            ->where('integration_id', (int)'61')
             ->first();
 
-        $document['_id'] = (string) $document['_id'];
+        $document['_id'] = (string)$document['_id'];
 
         $this->selectedItem = $document;
     }
-
 
 
     public function render()
@@ -172,59 +171,6 @@ class ReportPage extends Component
         }
     }
 
-    private function calculateTotalsForDetails()
-    {
-        if ($this->selectedItem) {
-            $this->totalsByPublisher = [];
-
-            foreach ($this->selectedItem['stats'] as $dateKey => $dateValue) {
-                foreach ($dateValue as $publisherId => $publisher) {
-                    foreach ($publisher as $sub_pub_id => $stats) {
-
-                        if (!isset($this->totalsByPublisher[$publisherId])) {
-                            $this->totalsByPublisher[$publisherId] = [
-                                'totalRenewals' => 0,
-                                'totalUnsubs' => 0,
-                                'totalSubs' => 0,
-                                'totalPaid' => 0,
-                                'totalCharged' => 0,
-                                'totalRenewalFailed' => 0,
-                            ];
-                        }
-
-                        $totals = $this->totalsByPublisher[$publisherId];
-
-                        if (isset($stats['subs']['count'])) {
-                            $totals['totalSubs'] += $stats['subs']['count'];
-                        }
-
-                        if (isset($stats['charged']['count'])) {
-                            $totals['totalCharged'] += $stats['charged']['count'];
-                            $totals['totalAmount'] += $stats['charged']['amount'];
-                        }
-
-                        if (isset($stats['renewals']['count'])) {
-                            $totals['totalRenewals'] += $stats['renewals']['count'];
-                            $totals['totalRenewalAmount'] += $stats['renewals']['amount'];
-                        }
-
-                        if (isset($stats['renewal_failed']['count'])) {
-                            $totals['totalRenewalFailed'] += $stats['renewal_failed']['count'];
-                        }
-
-                        if (isset($stats['unsub']['count'])) {
-                            $totals['totalUnsubs'] += $stats['unsub']['count'];
-                        }
-
-                        if (isset($stats['paid']['count'])) {
-                            $totals['totalPaid'] += $stats['paid']['count'];
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private function calculateTotalAmount()
     {
         $mongodb = DB::connection('mongodb');
@@ -250,6 +196,124 @@ class ReportPage extends Component
             ->get();
 
         return $uniqueItems;
+    }
+
+    private function calculateTotalsForDetails()
+    {
+        if ($this->selectedItem) {
+            $this->totalsByPublisher = [];
+
+            $documentMonth = substr($this->selectedItem['date'], 0, 6); // Extract the year and month from the document's date
+
+            foreach ($this->selectedItem['stats'] as $dateKey => $dateValue) {
+                // Check if the date is from the document's month
+                if (substr($dateKey, 0, 6) !== $documentMonth) {
+                    continue; // Skip data from other months
+                }
+
+                foreach ($dateValue as $pubkey => $publisherStats) {
+                    // Each $publisherStats array represents a publisher
+                    foreach ($publisherStats as $publisherId => $stats) {
+
+                        // Use the publisher's ID as the identifier
+
+
+                        if (!isset($this->totalsByPublisher[$publisherId])) {
+                            $this->totalsByPublisher[$publisherId] = [
+                                'totalRenewals' => 0,
+                                'totalUnsubs' => 0,
+                                'totalSubs' => 0,
+                                'totalPaid' => 0,
+                                'totalCharged' => 0,
+                                'totalRenewalFailed' => 0,
+                                'totalRenewalAmount' => 0,
+                                'totalAmount' => 0,
+
+                            ];
+                        }
+
+                        $totals = &$this->totalsByPublisher[$publisherId];
+
+                        if (isset($stats['renewals']['count'])) {
+                            $totals['totalRenewals'] += $stats['renewals']['count'];
+                            $totals['totalRenewalAmount'] += $stats['renewals']['amount'];
+                        }
+
+                        if (isset($stats['unsub']['count'])) {
+                            $totals['totalUnsubs'] += $stats['unsub']['count'];
+                        }
+
+                        if (isset($stats['subs']['count'])) {
+                            $totals['totalSubs'] += $stats['subs']['count'];
+                        }
+
+                        if (isset($stats['charged']['count'])) {
+                            $totals['totalCharged'] += $stats['charged']['count'];
+                            $totals['totalAmount'] += $stats['charged']['amount'];
+                        }
+
+                        if (isset($stats['renewal_failed']['count'])) {
+                            $totals['totalRenewalFailed'] += $stats['renewal_failed']['count'];
+                        }
+
+                        if (isset($stats['paid']['count'])) {
+                            $totals['totalPaid'] += $stats['paid']['count'];
+                        }
+
+// Calculate totals for sub-publishers within the publisher's stats
+                        foreach ($dateValue[0] as $publisherStats) {
+                            foreach ($publisherStats as $subPublisherData) {
+
+
+                                $subPublisherId = key($publisherStats);
+
+                                $subStats = current($subPublisherData);
+
+                                if (!isset($this->totalsByPublisher[$publisherId][$subPublisherId])) {
+                                    $this->totalsByPublisher[$publisherId][$subPublisherId] = [
+                                        'totalRenewals' => 0,
+                                        'totalUnsubs' => 0,
+                                        'totalSubs' => 0,
+                                        'totalPaid' => 0,
+                                        'totalCharged' => 0,
+                                        'totalRenewalFailed' => 0,
+                                        'totalRenewalAmount' => 0,
+                                    ];
+                                }
+
+                                $subTotals = &$this->totalsByPublisher[$publisherId][$subPublisherId];
+
+                                if (isset($subStats['renewals']['count'])) {
+                                    $subTotals['totalRenewals'] += $subStats['renewals']['count'];
+                                    $subTotals['totalRenewalAmount'] += $subStats['renewals']['amount'];
+                                }
+
+                                if (isset($subStats['unsub']['count'])) {
+                                    $subTotals['totalUnsubs'] += $subStats['unsub']['count'];
+                                }
+
+                                if (isset($subStats['subs']['count'])) {
+                                    $subTotals['totalSubs'] += $subStats['subs']['count'];
+                                }
+
+                                if (isset($subStats['charged']['count'])) {
+                                    $subTotals['totalCharged'] += $subStats['charged']['count'];
+                                    $subTotals['totalAmount'] += $subStats['charged']['amount'];
+                                }
+
+                                if (isset($subStats['renewal_failed']['count'])) {
+                                    $subTotals['totalRenewalFailed'] += $subStats['renewal_failed']['count'];
+                                }
+
+                                if (isset($subStats['paid']['count'])) {
+                                    $subTotals['totalPaid'] += $subStats['paid']['count'];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
