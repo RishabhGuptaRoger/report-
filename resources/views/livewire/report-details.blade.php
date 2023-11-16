@@ -1,7 +1,7 @@
 <div class="container">
     <h2>{{ $selectedItem['integration_data']['name'] }} Publisher Report</h2>
 
-
+    <!-- Publisher Report Table -->
     <div class="table-responsive">
         <h1>Publisher Report Details</h1>
         <table class="table table-striped">
@@ -32,12 +32,13 @@
         </table>
     </div>
 
-
+    <!-- Sub-Publisher Report Table -->
     <div class="table-responsive">
         <h1>Sub-Publisher Report Details</h1>
         <table class="table table-striped">
             <thead>
             <tr>
+                <th>Publisher ID</th>
                 <th>Sub-Publisher ID</th>
                 <th>Total Renewals</th>
                 <th>Total Unsubs</th>
@@ -49,10 +50,10 @@
             </thead>
             <tbody>
             @foreach($totalsByPublisher as $publisherId => $publisherTotals)
-                @if (isset($publisherTotals[$publisherId]) && count($publisherTotals[$publisherId]))
-                    @foreach($publisherTotals[$publisherId] as $subPublisherId => $subTotals)
-
+                @if (isset($publisherTotals['subPublishers']) && count($publisherTotals['subPublishers']))
+                    @foreach($publisherTotals['subPublishers'] as $subPublisherId => $subTotals)
                         <tr>
+                            <td>{{ $publisherId }}</td>
                             <td>{{ $subPublisherId }}</td>
                             <td>{{ $subTotals['totalRenewals'] }}</td>
                             <td>{{ $subTotals['totalUnsubs'] }}</td>
